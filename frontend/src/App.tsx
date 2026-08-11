@@ -3,6 +3,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { AccountsPage } from './pages/accounting/AccountsPage';
 import { JournalEntriesPage } from './pages/accounting/JournalEntriesPage';
 import { InvoiceTemplatesPage } from './pages/accounting/InvoiceTemplatesPage';
+import { POSPage } from './pages/sales/POSPage';
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/accounting/accounts" element={<AccountsPage />} />
         <Route path="/accounting/journal-entries" element={<JournalEntriesPage />} />
         <Route path="/accounting/invoice-templates" element={<InvoiceTemplatesPage />} />
+        <Route path="/sales/pos" element={<POSPage />} />
       </Routes>
     </AppLayout>
   );
