@@ -57,3 +57,28 @@ export class CreatePurchaseInvoiceDto {
   @Type(() => PurchaseLineInputDto)
   lines: PurchaseLineInputDto[];
 }
+
+export class PaySupplierDto {
+  @IsUUID()
+  companyId: string;
+
+  @IsNumber()
+  @Min(0.01)
+  amount: number;
+
+  @IsUUID()
+  cashOrBankAccountId: string;
+
+  @IsUUID()
+  apAccountId: string; // ذمم الموردين الدائنة (يُخصم منها مبلغ السداد)
+
+  @IsUUID()
+  periodId: string;
+
+  @IsUUID()
+  createdById: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}

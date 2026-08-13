@@ -5,6 +5,8 @@ const navItems = [
   { to: '/accounting/journal-entries', label: 'القيود المحاسبية' },
   { to: '/accounting/invoice-templates', label: 'قوالب الفواتير' },
   { to: '/sales/pos', label: 'نقطة البيع' },
+  { to: '/purchasing/invoices', label: 'فواتير الشراء' },
+  { to: '/purchasing/suppliers', label: 'الموردون' },
 ];
 
 export function Sidebar() {
