@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { SelectField } from '../../components/ui/SelectField';
+import { Modal } from '../../components/ui/Modal';
 import { PostingAccountsSetup } from './PostingAccountsSetup';
 
 interface Product {
@@ -26,6 +27,9 @@ interface Shift {
   status: 'open' | 'closed';
   openingCash: number;
   openedAt: string;
+  expectedCashSales?: number;
+  countedCash?: number;
+  cashVariance?: number;
 }
 
 interface CartLine {
@@ -66,6 +70,7 @@ function POSWorkspace({
   accounts: ReturnType<typeof usePostingAccounts>['accounts'];
 }) {
   const queryClient = useQueryClient();
+  const [closedShift, setClosedShift] = useState<Shift | null>(null);
 
   const { data: shifts } = useQuery({
     queryKey: ['cashier-shifts', companyId],
@@ -77,6 +82,19 @@ function POSWorkspace({
 
   const openShift = shifts?.find((s) => s.status === 'open');
 
+  // بعد الإغلاق الناجح نعرض نتيجة الفارق أولاً، ولا ننتقل تلقائياً لفتح وردية جديدة
+  if (closedShift) {
+    return (
+      <ShiftClosedSummary
+        shift={closedShift}
+        onContinue={() => {
+          setClosedShift(null);
+          queryClient.invalidateQueries({ queryKey: ['cashier-shifts', companyId] });
+        }}
+      />
+    );
+  }
+
   if (!openShift) {
     return (
       <OpenShiftForm
@@ -86,7 +104,106 @@ function POSWorkspace({
     );
   }
 
-  return <SellingScreen companyId={companyId} companyName={companyName} accounts={accounts} shiftId={openShift.id} />;
+  return (
+    <SellingScreen
+      companyId={companyId}
+      companyName={companyName}
+      accounts={accounts}
+      shift={openShift}
+      onShiftClosed={(shift) => setClosedShift(shift)}
+    />
+  );
+}
+
+function ShiftClosedSummary({ shift, onContinue }: { shift: Shift; onContinue: () => void }) {
+  const variance = Number(shift.cashVariance ?? 0);
+  const varianceLabel = variance === 0 ? 'متطابق تماماً' : variance > 0 ? 'زيادة في الصندوق' : 'عجز في الصندوق';
+  const varianceColor = variance === 0 ? 'text-gray-700' : variance > 0 ? 'text-green-600' : 'text-red-600';
+
+  return (
+    <Card className="max-w-sm">
+      <h3 className="font-semibold text-gray-900 mb-4">تم إغلاق الوردية</h3>
+      <div className="flex flex-col gap-2 text-sm">
+        <div className="flex justify-between text-gray-500">
+          <span>المبلغ الافتتاحي</span>
+          <span>{Number(shift.openingCash).toLocaleString('ar')} ر.س</span>
+        </div>
+        <div className="flex justify-between text-gray-500">
+          <span>المبيعات النقدية المسجلة</span>
+          <span>{Number(shift.expectedCashSales ?? 0).toLocaleString('ar')} ر.س</span>
+        </div>
+        <div className="flex justify-between text-gray-500">
+          <span>النقد المعدود فعلياً</span>
+          <span>{Number(shift.countedCash ?? 0).toLocaleString('ar')} ر.س</span>
+        </div>
+        <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-base">
+          <span>الفارق</span>
+          <span className={varianceColor}>{variance.toLocaleString('ar')} ر.س</span>
+        </div>
+        <p className={`text-xs ${varianceColor}`}>{varianceLabel}</p>
+      </div>
+      <div className="mt-4">
+        <Button onClick={onContinue}>فتح وردية جديدة</Button>
+      </div>
+    </Card>
+  );
+}
+
+function CloseShiftModal({
+  shiftId,
+  onClose,
+  onClosed,
+}: {
+  shiftId: string;
+  onClose: () => void;
+  onClosed: (shift: Shift) => void;
+}) {
+  const [countedCash, setCountedCash] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await api.post<Shift>(`/sales/cashier-shifts/${shiftId}/close`, {
+        countedCash: Number(countedCash),
+        notes: notes || undefined,
+      });
+      return res.data;
+    },
+    onSuccess: (shift) => onClosed(shift),
+  });
+
+  return (
+    <Modal title="إغلاق الوردية" onClose={onClose}>
+      <div className="flex flex-col gap-3">
+        <Field
+          label="النقد الفعلي الموجود في الدرج"
+          type="number"
+          value={countedCash}
+          onChange={(e) => setCountedCash(e.target.value)}
+          placeholder="0"
+          autoFocus
+        />
+        <label className="flex flex-col gap-1 text-sm text-gray-700">
+          <span className="font-medium">ملاحظات (اختياري)</span>
+          <textarea
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </label>
+        {mutation.isError && <p className="text-sm text-red-600">{extractErrorMessage(mutation.error)}</p>}
+        <div className="flex gap-2 justify-end mt-1">
+          <Button variant="secondary" onClick={onClose} disabled={mutation.isPending}>
+            إلغاء
+          </Button>
+          <Button disabled={!countedCash || mutation.isPending} onClick={() => mutation.mutate()}>
+            {mutation.isPending ? 'جاري الإغلاق...' : 'تأكيد الإغلاق'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 function OpenShiftForm({ companyId, onSuccess }: { companyId: string; onSuccess: () => void }) {
@@ -127,19 +244,23 @@ function SellingScreen({
   companyId,
   companyName,
   accounts,
-  shiftId,
+  shift,
+  onShiftClosed,
 }: {
   companyId: string;
   companyName: string;
   accounts: ReturnType<typeof usePostingAccounts>['accounts'];
-  shiftId: string;
+  shift: Shift;
+  onShiftClosed: (shift: Shift) => void;
 }) {
+  const shiftId = shift.id;
   const queryClient = useQueryClient();
   const [cart, setCart] = useState<CartLine[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit'>('cash');
   const [customerId, setCustomerId] = useState('');
   const [search, setSearch] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [showCloseShiftModal, setShowCloseShiftModal] = useState(false);
 
   const { data: products } = useQuery({
     queryKey: ['products', companyId],
@@ -220,14 +341,26 @@ function SellingScreen({
       {/* شبكة المنتجات */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">نقطة البيع — {companyName}</h2>
-          <Field
-            label=""
-            placeholder="ابحث عن منتج بالاسم أو الرمز..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64"
-          />
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">نقطة البيع — {companyName}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              الوردية مفتوحة منذ{' '}
+              {new Date(shift.openedAt).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })} — المبلغ
+              الافتتاحي {Number(shift.openingCash).toLocaleString('ar')} ر.س
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Field
+              label=""
+              placeholder="ابحث عن منتج بالاسم أو الرمز..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-64"
+            />
+            <Button variant="secondary" onClick={() => setShowCloseShiftModal(true)}>
+              إغلاق الوردية
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
           {filteredProducts.map((p) => (
@@ -313,6 +446,17 @@ function SellingScreen({
           {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
         </div>
       </Card>
+
+      {showCloseShiftModal && (
+        <CloseShiftModal
+          shiftId={shiftId}
+          onClose={() => setShowCloseShiftModal(false)}
+          onClosed={(closed) => {
+            setShowCloseShiftModal(false);
+            onShiftClosed(closed);
+          }}
+        />
+      )}
     </div>
   );
 }
