@@ -6,6 +6,8 @@ import { InvoiceTemplatesPage } from './pages/accounting/InvoiceTemplatesPage';
 import { POSPage } from './pages/sales/POSPage';
 import { SuppliersPage } from './pages/purchasing/SuppliersPage';
 import { PurchaseInvoicePage } from './pages/purchasing/PurchaseInvoicePage';
+import { EmployeesPage } from './pages/hr/EmployeesPage';
+import { PayrollPage } from './pages/hr/PayrollPage';
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
         <Route path="/sales/pos" element={<POSPage />} />
         <Route path="/purchasing/suppliers" element={<SuppliersPage />} />
         <Route path="/purchasing/invoices" element={<PurchaseInvoicePage />} />
+        <Route path="/hr/employees" element={<EmployeesPage />} />
+        <Route path="/hr/payroll" element={<PayrollPage />} />
       </Routes>
     </AppLayout>
   );

@@ -7,6 +7,8 @@ const navItems = [
   { to: '/sales/pos', label: 'نقطة البيع' },
   { to: '/purchasing/invoices', label: 'فواتير الشراء' },
   { to: '/purchasing/suppliers', label: 'الموردون' },
+  { to: '/hr/employees', label: 'الموظفون' },
+  { to: '/hr/payroll', label: 'الرواتب' },
 ];
 
 export function Sidebar() {
