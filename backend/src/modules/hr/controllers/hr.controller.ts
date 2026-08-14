@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
 import { EmployeesService } from '../services/employees.service';
 import { PayrollService } from '../services/payroll.service';
-import { CreateEmployeeDto, RunPayrollDto } from '../dto/hr.dto';
+import { EmployeeAdvancesService } from '../services/employee-advances.service';
+import { CreateEmployeeDto, RunPayrollDto, GrantAdvanceDto } from '../dto/hr.dto';
 
 @Controller('hr/employees')
 export class EmployeesController {
@@ -30,5 +31,25 @@ export class PayrollController {
   @Get()
   findAll(@Query('companyId') companyId: string) {
     return this.service.findAllForCompany(companyId);
+  }
+}
+
+@Controller('hr/employees/:employeeId/advances')
+export class EmployeeAdvancesController {
+  constructor(private readonly service: EmployeeAdvancesService) {}
+
+  @Post()
+  grant(@Param('employeeId') employeeId: string, @Body() dto: GrantAdvanceDto) {
+    return this.service.grant(employeeId, dto);
+  }
+
+  @Get('ledger')
+  getLedger(@Param('employeeId') employeeId: string) {
+    return this.service.getLedger(employeeId);
+  }
+
+  @Get('balance')
+  async getBalance(@Param('employeeId') employeeId: string) {
+    return { balance: await this.service.getBalance(employeeId) };
   }
 }

@@ -37,6 +37,31 @@ export class CreateEmployeeDto {
   gosiEmployeeRate?: number;
 }
 
+export class GrantAdvanceDto {
+  @IsUUID()
+  companyId: string;
+
+  @IsNumber()
+  @Min(0.01)
+  amount: number;
+
+  @IsUUID()
+  cashOrBankAccountId: string;
+
+  @IsUUID()
+  employeeAdvancesAccountId: string; // ذمم سلف الموظفين (أصل، يُدين عند صرف السلفة)
+
+  @IsUUID()
+  periodId: string;
+
+  @IsUUID()
+  createdById: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
 export class ManualDeductionDto {
   @IsUUID()
   employeeId: string;

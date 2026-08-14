@@ -4,6 +4,7 @@ import { Repository, DataSource, EntityManager } from 'typeorm';
 import { PayrollRun } from '../entities/payroll-run.entity';
 import { Payslip } from '../entities/payslip.entity';
 import { Employee } from '../entities/employee.entity';
+import { EmployeeAdvanceLedgerEntry } from '../entities/employee-advance-ledger-entry.entity';
 import { JournalEntry } from '../../accounting/entities/journal-entry.entity';
 import { RunPayrollDto } from '../dto/hr.dto';
 
@@ -113,8 +114,22 @@ export class PayrollService {
         status: 'posted',
         payslips: payslips as any,
       });
+      const savedPayrollRun = await manager.save(payrollRun);
 
-      return manager.save(payrollRun);
+      // تسجيل حركة سداد (خصم) في سجل سلفة كل موظف خُصم منه مبلغ يدوي في هذه الدورة
+      for (const [employeeId, amount] of manualDeductionsMap.entries()) {
+        if (amount <= 0) continue;
+        const deductionEntry = manager.create(EmployeeAdvanceLedgerEntry, {
+          employeeId,
+          type: 'deduction',
+          amount: -amount,
+          referenceId: savedPayrollRun.id,
+          note: `خصم من راتب شهر ${dto.periodMonth}/${dto.periodYear} سداداً لسلفة`,
+        });
+        await manager.save(deductionEntry);
+      }
+
+      return savedPayrollRun;
     });
   }
 

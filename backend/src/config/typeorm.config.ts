@@ -25,6 +25,7 @@ import { SupplierLedgerEntry } from '../modules/purchasing/entities/supplier-led
 import { Employee } from '../modules/hr/entities/employee.entity';
 import { PayrollRun } from '../modules/hr/entities/payroll-run.entity';
 import { Payslip } from '../modules/hr/entities/payslip.entity';
+import { EmployeeAdvanceLedgerEntry } from '../modules/hr/entities/employee-advance-ledger-entry.entity';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
@@ -59,6 +60,7 @@ export const dataSourceOptions: DataSourceOptions = {
     Employee,
     PayrollRun,
     Payslip,
+    EmployeeAdvanceLedgerEntry,
   ],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false,
