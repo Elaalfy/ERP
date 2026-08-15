@@ -9,6 +9,7 @@ const navItems = [
   { to: '/purchasing/suppliers', label: 'الموردون' },
   { to: '/hr/employees', label: 'الموظفون' },
   { to: '/hr/payroll', label: 'الرواتب' },
+  { to: '/reports/group', label: 'التقارير الموحدة' },
 ];
 
 export function Sidebar() {

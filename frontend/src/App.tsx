@@ -8,6 +8,7 @@ import { SuppliersPage } from './pages/purchasing/SuppliersPage';
 import { PurchaseInvoicePage } from './pages/purchasing/PurchaseInvoicePage';
 import { EmployeesPage } from './pages/hr/EmployeesPage';
 import { PayrollPage } from './pages/hr/PayrollPage';
+import { GroupReportsPage } from './pages/reports/GroupReportsPage';
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/purchasing/invoices" element={<PurchaseInvoicePage />} />
         <Route path="/hr/employees" element={<EmployeesPage />} />
         <Route path="/hr/payroll" element={<PayrollPage />} />
+        <Route path="/reports/group" element={<GroupReportsPage />} />
       </Routes>
     </AppLayout>
   );
