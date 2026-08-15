@@ -4,6 +4,7 @@ const navItems = [
   { to: '/accounting/accounts', label: 'شجرة الحسابات' },
   { to: '/accounting/journal-entries', label: 'القيود المحاسبية' },
   { to: '/accounting/invoice-templates', label: 'قوالب الفواتير' },
+  { to: '/accounting/fiscal-periods', label: 'الفترات المالية' },
   { to: '/sales/pos', label: 'نقطة البيع' },
   { to: '/purchasing/invoices', label: 'فواتير الشراء' },
   { to: '/purchasing/suppliers', label: 'الموردون' },

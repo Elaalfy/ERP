@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, extractErrorMessage } from '../../lib/api';
 import { useCompany } from '../../context/CompanyContext';
+import { useActiveFiscalPeriod } from '../../lib/useActiveFiscalPeriod';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { SelectField } from '../../components/ui/SelectField';
@@ -141,6 +142,7 @@ function NewJournalEntryForm({
 }) {
   const [description, setDescription] = useState('');
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const [lines, setLines] = useState<LineDraft[]>([
     { accountId: '', debit: '', credit: '' },
     { accountId: '', debit: '', credit: '' },
@@ -153,10 +155,10 @@ function NewJournalEntryForm({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      // بيانات ثابتة مؤقتة (الفترة والمستخدم) لحين بناء شاشات إدارتها
+      // بيانات ثابتة مؤقتة (المستخدم) لحين بناء شاشة إدارته؛ الفترة المالية تُجلب فعلياً الآن
       await api.post('/accounting/journal-entries', {
         companyId,
-        periodId: PLACEHOLDER_PERIOD_ID,
+        periodId,
         createdById: PLACEHOLDER_USER_ID,
         entryDate,
         sourceType: 'manual',
@@ -237,10 +239,15 @@ function NewJournalEntryForm({
             <span className="text-red-600 mr-3 text-xs">⚠ القيد غير متوازن</span>
           )}
         </div>
-        <Button disabled={!isBalanced || mutation.isPending} onClick={() => mutation.mutate()}>
+        <Button disabled={!isBalanced || mutation.isPending || !periodId} onClick={() => mutation.mutate()}>
           {mutation.isPending ? 'جاري الحفظ...' : 'حفظ القيد'}
         </Button>
       </div>
+      {periodError && (
+        <p className="text-sm text-red-600">
+          لا توجد فترة مالية مفتوحة لهذه الشركة، يجب إنشاؤها أولاً من شاشة <code>الفترات المالية</code>.
+        </p>
+      )}
 
       {mutation.isError && (
         <p className="text-sm text-red-600 mt-2">{extractErrorMessage(mutation.error)}</p>
@@ -250,5 +257,5 @@ function NewJournalEntryForm({
 }
 
 // قيم مؤقتة لحين بناء شاشات الفترات المالية والمستخدمين وربطها فعلياً بالواجهة
-const PLACEHOLDER_PERIOD_ID = '8a4e76a3-0076-4c7b-bc6c-3f300a53486f';
+// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
 const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';

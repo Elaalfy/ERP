@@ -13,10 +13,12 @@ import { InvoiceTemplateField } from './entities/invoice-template-field.entity';
 import { AccountsService } from './services/accounts.service';
 import { JournalEntriesService } from './services/journal-entries.service';
 import { InvoiceTemplatesService } from './services/invoice-templates.service';
+import { FiscalPeriodsService } from './services/fiscal-periods.service';
 
 import { AccountsController } from './controllers/accounts.controller';
 import { JournalEntriesController } from './controllers/journal-entries.controller';
 import { InvoiceTemplatesController } from './controllers/invoice-templates.controller';
+import { FiscalPeriodsController } from './controllers/fiscal-periods.controller';
 
 @Module({
   imports: [
@@ -32,7 +34,12 @@ import { InvoiceTemplatesController } from './controllers/invoice-templates.cont
       InvoiceTemplateField,
     ]),
   ],
-  providers: [AccountsService, JournalEntriesService, InvoiceTemplatesService],
-  controllers: [AccountsController, JournalEntriesController, InvoiceTemplatesController],
+  providers: [AccountsService, JournalEntriesService, InvoiceTemplatesService, FiscalPeriodsService],
+  controllers: [
+    AccountsController,
+    JournalEntriesController,
+    InvoiceTemplatesController,
+    FiscalPeriodsController,
+  ],
 })
 export class AccountingModule {}

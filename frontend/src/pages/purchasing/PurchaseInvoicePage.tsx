@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, extractErrorMessage } from '../../lib/api';
 import { useCompany } from '../../context/CompanyContext';
 import { usePurchasingPostingAccounts } from '../../lib/usePurchasingPostingAccounts';
+import { useActiveFiscalPeriod } from '../../lib/useActiveFiscalPeriod';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
@@ -12,8 +13,7 @@ import { PurchasingPostingAccountsSetup } from './PurchasingPostingAccountsSetup
 import { AddSupplierModal } from './SuppliersPage';
 
 const VAT_RATE = 0.15;
-// قيم مؤقتة لحين بناء شاشات الفترات المالية والمستخدمين وربطها فعلياً (بنفس نمط نقطة البيع)
-const PLACEHOLDER_PERIOD_ID = '8a4e76a3-0076-4c7b-bc6c-3f300a53486f';
+// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
 const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
 
 interface Supplier {
@@ -62,6 +62,7 @@ function PurchaseInvoiceWorkspace({
   accounts: ReturnType<typeof usePurchasingPostingAccounts>['accounts'];
 }) {
   const queryClient = useQueryClient();
+  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
 
   const [cart, setCart] = useState<PurchaseCartLine[]>([]);
   const [supplierId, setSupplierId] = useState('');
@@ -131,7 +132,7 @@ function PurchaseInvoiceWorkspace({
         supplierInvoiceRef: supplierInvoiceRef || undefined,
         paymentMethod,
         vatRate: VAT_RATE,
-        periodId: PLACEHOLDER_PERIOD_ID,
+        periodId,
         createdById: PLACEHOLDER_USER_ID,
         ...accounts,
         lines: cart.map((l) => ({ productId: l.productId, quantity: l.quantity, unitCost: l.unitCost })),
@@ -148,7 +149,7 @@ function PurchaseInvoiceWorkspace({
   });
 
   const linesValid = cart.length > 0 && cart.every((l) => l.quantity > 0 && l.unitCost > 0);
-  const canSubmit = !!supplierId && linesValid && !createMutation.isPending;
+  const canSubmit = !!supplierId && linesValid && !createMutation.isPending && !!periodId;
 
   if (createdInvoice) {
     return (
@@ -287,6 +288,13 @@ function PurchaseInvoiceWorkspace({
             {createMutation.isPending ? 'جاري الحفظ...' : 'حفظ فاتورة الشراء'}
           </Button>
 
+          {periodError && (
+            <p className="text-sm text-red-600">
+              لا توجد فترة مالية مفتوحة لهذه الشركة، يجب إنشاؤها أولاً من شاشة{' '}
+              <code>الفترات المالية</code>.
+            </p>
+          )}
+
           {createMutation.isError && (
             <p className="text-sm text-red-600">{extractErrorMessage(createMutation.error)}</p>
           )}
@@ -389,6 +397,7 @@ function PostSaveScreen({
   onDone: () => void;
 }) {
   const queryClient = useQueryClient();
+  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const [payAmount, setPayAmount] = useState(String(invoice.totalAmount));
   const [paid, setPaid] = useState(false);
 
@@ -399,7 +408,7 @@ function PostSaveScreen({
         amount: Number(payAmount),
         cashOrBankAccountId: accounts.cashOrBankAccountId,
         apAccountId: accounts.apAccountId,
-        periodId: PLACEHOLDER_PERIOD_ID,
+        periodId,
         createdById: PLACEHOLDER_USER_ID,
         note: `سداد فوري لفاتورة الشراء ${invoice.invoiceNumber}`,
       });
@@ -429,12 +438,18 @@ function PostSaveScreen({
             value={payAmount}
             onChange={(e) => setPayAmount(e.target.value)}
           />
+          {periodError && (
+            <p className="text-sm text-red-600">
+              لا توجد فترة مالية مفتوحة لهذه الشركة، يجب إنشاؤها أولاً من شاشة{' '}
+              <code>الفترات المالية</code>.
+            </p>
+          )}
           {payMutation.isError && (
             <p className="text-sm text-red-600">{extractErrorMessage(payMutation.error)}</p>
           )}
           <div className="flex gap-2">
             <Button
-              disabled={!payAmount || Number(payAmount) <= 0 || payMutation.isPending}
+              disabled={!payAmount || Number(payAmount) <= 0 || payMutation.isPending || !periodId}
               onClick={() => payMutation.mutate()}
             >
               {payMutation.isPending ? 'جاري السداد...' : 'تأكيد السداد الآن'}

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, extractErrorMessage } from '../../lib/api';
 import { useCompany } from '../../context/CompanyContext';
 import { usePostingAccounts } from '../../lib/usePostingAccounts';
+import { useActiveFiscalPeriod } from '../../lib/useActiveFiscalPeriod';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
@@ -41,8 +42,7 @@ interface CartLine {
 
 const VAT_RATE = 0.15;
 
-// قيم مؤقتة لحين بناء شاشات الفترات المالية والمستخدمين وربطها فعلياً
-const PLACEHOLDER_PERIOD_ID = '8a4e76a3-0076-4c7b-bc6c-3f300a53486f';
+// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
 const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
 
 export function POSPage() {
@@ -71,6 +71,7 @@ function POSWorkspace({
 }) {
   const queryClient = useQueryClient();
   const [closedShift, setClosedShift] = useState<Shift | null>(null);
+  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
 
   const { data: shifts } = useQuery({
     queryKey: ['cashier-shifts', companyId],
@@ -316,7 +317,7 @@ function SellingScreen({
         customerId: paymentMethod === 'credit' ? customerId : undefined,
         paymentMethod,
         vatRate: VAT_RATE,
-        periodId: PLACEHOLDER_PERIOD_ID,
+        periodId,
         createdById: PLACEHOLDER_USER_ID,
         shiftId,
         ...accounts,
@@ -334,10 +335,19 @@ function SellingScreen({
   });
 
   const canCheckout =
-    cart.length > 0 && (paymentMethod !== 'credit' || !!customerId) && !checkoutMutation.isPending;
+    cart.length > 0 &&
+    (paymentMethod !== 'credit' || !!customerId) &&
+    !checkoutMutation.isPending &&
+    !!periodId;
 
   return (
     <div className="grid grid-cols-[1fr_360px] gap-6 h-full">
+      {periodError && (
+        <p className="col-span-2 text-sm text-red-600">
+          لا توجد فترة مالية مفتوحة لهذه الشركة، يجب إنشاؤها أولاً من شاشة{' '}
+          <code>الفترات المالية</code>.
+        </p>
+      )}
       {/* شبكة المنتجات */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">

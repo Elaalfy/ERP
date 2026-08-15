@@ -3,14 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, extractErrorMessage } from '../../lib/api';
 import { useCompany } from '../../context/CompanyContext';
 import { useHrPostingAccounts } from '../../lib/useHrPostingAccounts';
+import { useActiveFiscalPeriod } from '../../lib/useActiveFiscalPeriod';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { HrPostingAccountsSetup } from './HrPostingAccountsSetup';
 import type { Employee } from './EmployeesPage';
 
-// قيم مؤقتة لحين بناء شاشات الفترات المالية والمستخدمين وربطها فعلياً (بنفس نمط نقطة البيع والمشتريات)
-const PLACEHOLDER_PERIOD_ID = '8a4e76a3-0076-4c7b-bc6c-3f300a53486f';
+// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
 const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
 
 interface Payslip {
@@ -57,6 +57,7 @@ function PayrollWorkspace({
   accounts: ReturnType<typeof useHrPostingAccounts>['accounts'];
 }) {
   const queryClient = useQueryClient();
+  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const today = new Date();
   const [periodMonth, setPeriodMonth] = useState(today.getMonth() + 1);
   const [periodYear, setPeriodYear] = useState(today.getFullYear());
@@ -117,7 +118,7 @@ function PayrollWorkspace({
         companyId,
         periodMonth,
         periodYear,
-        periodId: PLACEHOLDER_PERIOD_ID,
+        periodId,
         createdById: PLACEHOLDER_USER_ID,
         salaryExpenseAccountId: accounts.salaryExpenseAccountId,
         gosiPayableAccountId: accounts.gosiPayableAccountId,
@@ -240,13 +241,20 @@ function PayrollWorkspace({
           </div>
         )}
 
+        {periodError && (
+          <p className="text-sm text-red-600 mt-2">
+            لا توجد فترة مالية مفتوحة لهذه الشركة، يجب إنشاؤها أولاً من شاشة{' '}
+            <code>الفترات المالية</code>.
+          </p>
+        )}
+
         {runMutation.isError && (
           <p className="text-sm text-red-600 mt-2">{extractErrorMessage(runMutation.error)}</p>
         )}
 
         <div className="mt-4">
           <Button
-            disabled={!employees || employees.length === 0 || runMutation.isPending}
+            disabled={!employees || employees.length === 0 || runMutation.isPending || !periodId}
             onClick={() => runMutation.mutate()}
           >
             {runMutation.isPending ? 'جاري اعتماد الدورة...' : 'اعتماد وتشغيل دورة الرواتب لكل الموظفين'}

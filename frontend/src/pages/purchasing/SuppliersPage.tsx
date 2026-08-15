@@ -3,13 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, extractErrorMessage } from '../../lib/api';
 import { useCompany } from '../../context/CompanyContext';
 import { usePurchasingPostingAccounts } from '../../lib/usePurchasingPostingAccounts';
+import { useActiveFiscalPeriod } from '../../lib/useActiveFiscalPeriod';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { PurchasingPostingAccountsSetup } from './PurchasingPostingAccountsSetup';
 
-const PLACEHOLDER_PERIOD_ID = '8a4e76a3-0076-4c7b-bc6c-3f300a53486f';
+// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
 const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
 
 interface Supplier {
@@ -201,6 +202,7 @@ function SupplierLedgerModal({
   onPaid: () => void;
 }) {
   const queryClient = useQueryClient();
+  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const [payAmount, setPayAmount] = useState('');
   const [payNote, setPayNote] = useState('');
 
@@ -227,7 +229,7 @@ function SupplierLedgerModal({
         amount: Number(payAmount),
         cashOrBankAccountId: accounts.cashOrBankAccountId,
         apAccountId: accounts.apAccountId,
-        periodId: PLACEHOLDER_PERIOD_ID,
+        periodId,
         createdById: PLACEHOLDER_USER_ID,
         note: payNote || undefined,
       });
@@ -283,11 +285,17 @@ function SupplierLedgerModal({
             placeholder="0"
           />
           <Field label="ملاحظة (اختياري)" value={payNote} onChange={(e) => setPayNote(e.target.value)} />
+          {periodError && (
+            <p className="text-sm text-red-600">
+              لا توجد فترة مالية مفتوحة لهذه الشركة، يجب إنشاؤها أولاً من شاشة{' '}
+              <code>الفترات المالية</code>.
+            </p>
+          )}
           {payMutation.isError && (
             <p className="text-sm text-red-600">{extractErrorMessage(payMutation.error)}</p>
           )}
           <Button
-            disabled={!payAmount || Number(payAmount) <= 0 || payMutation.isPending}
+            disabled={!payAmount || Number(payAmount) <= 0 || payMutation.isPending || !periodId}
             onClick={() => payMutation.mutate()}
           >
             {payMutation.isPending ? 'جاري السداد...' : 'تأكيد السداد'}

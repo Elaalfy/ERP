@@ -3,14 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, extractErrorMessage } from '../../lib/api';
 import { useCompany } from '../../context/CompanyContext';
 import { useHrPostingAccounts } from '../../lib/useHrPostingAccounts';
+import { useActiveFiscalPeriod } from '../../lib/useActiveFiscalPeriod';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { HrPostingAccountsSetup } from './HrPostingAccountsSetup';
 
-// قيم مؤقتة لحين بناء شاشات الفترات المالية والمستخدمين وربطها فعلياً (بنفس نمط نقطة البيع والمشتريات)
-const PLACEHOLDER_PERIOD_ID = '8a4e76a3-0076-4c7b-bc6c-3f300a53486f';
+// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
 const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
 
 export interface Employee {
@@ -240,6 +240,7 @@ function AdvanceLedgerModal({
   onChanged: () => void;
 }) {
   const queryClient = useQueryClient();
+  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const [grantAmount, setGrantAmount] = useState('');
   const [grantNote, setGrantNote] = useState('');
 
@@ -266,7 +267,7 @@ function AdvanceLedgerModal({
         amount: Number(grantAmount),
         cashOrBankAccountId: accounts.cashOrBankAccountId,
         employeeAdvancesAccountId: accounts.employeeAdvancesAccountId,
-        periodId: PLACEHOLDER_PERIOD_ID,
+        periodId,
         createdById: PLACEHOLDER_USER_ID,
         note: grantNote || undefined,
       });
@@ -322,11 +323,17 @@ function AdvanceLedgerModal({
             placeholder="0"
           />
           <Field label="ملاحظة (اختياري)" value={grantNote} onChange={(e) => setGrantNote(e.target.value)} />
+          {periodError && (
+            <p className="text-sm text-red-600">
+              لا توجد فترة مالية مفتوحة لهذه الشركة، يجب إنشاؤها أولاً من شاشة{' '}
+              <code>الفترات المالية</code>.
+            </p>
+          )}
           {grantMutation.isError && (
             <p className="text-sm text-red-600">{extractErrorMessage(grantMutation.error)}</p>
           )}
           <Button
-            disabled={!grantAmount || Number(grantAmount) <= 0 || grantMutation.isPending}
+            disabled={!grantAmount || Number(grantAmount) <= 0 || grantMutation.isPending || !periodId}
             onClick={() => grantMutation.mutate()}
           >
             {grantMutation.isPending ? 'جاري الصرف...' : 'تأكيد صرف السلفة'}
