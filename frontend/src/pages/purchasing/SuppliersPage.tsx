@@ -9,9 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { PurchasingPostingAccountsSetup } from './PurchasingPostingAccountsSetup';
-
-// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
-const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
+import { useAuth } from '../../context/AuthContext';
 
 interface Supplier {
   id: string;
@@ -201,6 +199,7 @@ function SupplierLedgerModal({
   onClose: () => void;
   onPaid: () => void;
 }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const [payAmount, setPayAmount] = useState('');
@@ -230,7 +229,7 @@ function SupplierLedgerModal({
         cashOrBankAccountId: accounts.cashOrBankAccountId,
         apAccountId: accounts.apAccountId,
         periodId,
-        createdById: PLACEHOLDER_USER_ID,
+        createdById: user!.id,
         note: payNote || undefined,
       });
       return res.data;

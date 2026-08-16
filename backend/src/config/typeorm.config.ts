@@ -2,6 +2,7 @@ import { registerAs } from '@nestjs/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { Company } from '../modules/core/entities/company.entity';
 import { User } from '../modules/core/entities/user.entity';
+import { UserCompanyRole } from '../modules/core/entities/user-company-role.entity';
 import { CoaTemplate } from '../modules/accounting/entities/coa-template.entity';
 import { CoaTemplateAccount } from '../modules/accounting/entities/coa-template-account.entity';
 import { Account } from '../modules/accounting/entities/account.entity';
@@ -37,6 +38,7 @@ export const dataSourceOptions: DataSourceOptions = {
   entities: [
     Company,
     User,
+    UserCompanyRole,
     CoaTemplate,
     CoaTemplateAccount,
     Account,

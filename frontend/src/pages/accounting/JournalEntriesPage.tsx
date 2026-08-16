@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { SelectField } from '../../components/ui/SelectField';
 import { Field } from '../../components/ui/Field';
+import { useAuth } from '../../context/AuthContext';
 
 interface Account {
   id: string;
@@ -140,6 +141,7 @@ function NewJournalEntryForm({
   accounts: Account[];
   onSuccess: () => void;
 }) {
+  const { user } = useAuth();
   const [description, setDescription] = useState('');
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10));
   const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
@@ -159,7 +161,7 @@ function NewJournalEntryForm({
       await api.post('/accounting/journal-entries', {
         companyId,
         periodId,
-        createdById: PLACEHOLDER_USER_ID,
+        createdById: user!.id,
         entryDate,
         sourceType: 'manual',
         description,
@@ -257,5 +259,3 @@ function NewJournalEntryForm({
 }
 
 // قيم مؤقتة لحين بناء شاشات الفترات المالية والمستخدمين وربطها فعلياً بالواجهة
-// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
-const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';

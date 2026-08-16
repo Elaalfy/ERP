@@ -4,14 +4,12 @@ import { api, extractErrorMessage } from '../../lib/api';
 import { useCompany } from '../../context/CompanyContext';
 import { useHrPostingAccounts } from '../../lib/useHrPostingAccounts';
 import { useActiveFiscalPeriod } from '../../lib/useActiveFiscalPeriod';
+import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { HrPostingAccountsSetup } from './HrPostingAccountsSetup';
-
-// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
-const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
 
 export interface Employee {
   id: string;
@@ -239,6 +237,7 @@ function AdvanceLedgerModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const [grantAmount, setGrantAmount] = useState('');
@@ -268,7 +267,7 @@ function AdvanceLedgerModal({
         cashOrBankAccountId: accounts.cashOrBankAccountId,
         employeeAdvancesAccountId: accounts.employeeAdvancesAccountId,
         periodId,
-        createdById: PLACEHOLDER_USER_ID,
+        createdById: user!.id,
         note: grantNote || undefined,
       });
       return res.data;

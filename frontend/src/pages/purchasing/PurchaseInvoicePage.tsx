@@ -11,11 +11,9 @@ import { SelectField } from '../../components/ui/SelectField';
 import { Modal } from '../../components/ui/Modal';
 import { PurchasingPostingAccountsSetup } from './PurchasingPostingAccountsSetup';
 import { AddSupplierModal } from './SuppliersPage';
+import { useAuth } from '../../context/AuthContext';
 
 const VAT_RATE = 0.15;
-// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
-const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
-
 interface Supplier {
   id: string;
   name: string;
@@ -61,6 +59,7 @@ function PurchaseInvoiceWorkspace({
   companyName: string;
   accounts: ReturnType<typeof usePurchasingPostingAccounts>['accounts'];
 }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
 
@@ -133,7 +132,7 @@ function PurchaseInvoiceWorkspace({
         paymentMethod,
         vatRate: VAT_RATE,
         periodId,
-        createdById: PLACEHOLDER_USER_ID,
+        createdById: user!.id,
         ...accounts,
         lines: cart.map((l) => ({ productId: l.productId, quantity: l.quantity, unitCost: l.unitCost })),
       });
@@ -396,6 +395,7 @@ function PostSaveScreen({
   accounts: ReturnType<typeof usePurchasingPostingAccounts>['accounts'];
   onDone: () => void;
 }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const [payAmount, setPayAmount] = useState(String(invoice.totalAmount));
@@ -409,7 +409,7 @@ function PostSaveScreen({
         cashOrBankAccountId: accounts.cashOrBankAccountId,
         apAccountId: accounts.apAccountId,
         periodId,
-        createdById: PLACEHOLDER_USER_ID,
+        createdById: user!.id,
         note: `سداد فوري لفاتورة الشراء ${invoice.invoiceNumber}`,
       });
       return res.data as { newBalance: number };

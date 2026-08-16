@@ -3,6 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 interface Company {
   id: string;
   name: string;
+  role: string;
 }
 
 interface CompanyContextValue {

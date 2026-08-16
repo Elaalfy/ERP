@@ -1,29 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import { useCompany } from '../../context/CompanyContext';
 
-interface CompanyOption {
-  id: string;
-  name: string;
-}
-
 export function CompanySwitcher() {
+  const { companies } = useAuth();
   const { company, setCompany } = useCompany();
   const [initialized, setInitialized] = useState(false);
 
-  const { data: companies } = useQuery({
-    queryKey: ['companies'],
-    queryFn: async () => {
-      const res = await api.get<CompanyOption[]>('/companies');
-      return res.data;
-    },
-  });
-
-  // عند أول تحميل للشركات، نختار الأولى تلقائياً كافتراضي حتى لا تبقى الشاشات فارغة
+  // عند أول تحميل لشركات المستخدم المصرح بها، نختار الأولى تلقائياً حتى لا تبقى الشاشات فارغة
   useEffect(() => {
-    if (!initialized && companies && companies.length > 0 && !company) {
-      setCompany(companies[0]);
+    if (!initialized && companies.length > 0 && !company) {
+      setCompany({ id: companies[0].companyId, name: companies[0].companyName, role: companies[0].role });
       setInitialized(true);
     }
   }, [companies, initialized, company, setCompany]);
@@ -33,16 +20,16 @@ export function CompanySwitcher() {
       className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white"
       value={company?.id ?? ''}
       onChange={(e) => {
-        const selected = companies?.find((c) => c.id === e.target.value);
-        setCompany(selected ?? null);
+        const selected = companies.find((c) => c.companyId === e.target.value);
+        setCompany(selected ? { id: selected.companyId, name: selected.companyName, role: selected.role } : null);
       }}
     >
       <option value="" disabled>
         اختر الشركة
       </option>
-      {companies?.map((c) => (
-        <option key={c.id} value={c.id}>
-          {c.name}
+      {companies.map((c) => (
+        <option key={c.companyId} value={c.companyId}>
+          {c.companyName}
         </option>
       ))}
     </select>

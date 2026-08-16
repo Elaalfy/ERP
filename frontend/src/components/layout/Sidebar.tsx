@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/accounting/accounts', label: 'شجرة الحسابات' },
@@ -14,9 +15,12 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const { user } = useAuth();
+  const items = user?.isGroupManager ? [...navItems, { to: '/users', label: 'إدارة المستخدمين' }] : navItems;
+
   return (
     <nav className="w-56 shrink-0 border-l border-gray-200 bg-white h-full p-4 flex flex-col gap-1">
-      {navItems.map((item) => (
+      {items.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}

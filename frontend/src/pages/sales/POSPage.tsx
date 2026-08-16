@@ -10,6 +10,7 @@ import { Field } from '../../components/ui/Field';
 import { SelectField } from '../../components/ui/SelectField';
 import { Modal } from '../../components/ui/Modal';
 import { PostingAccountsSetup } from './PostingAccountsSetup';
+import { useAuth } from '../../context/AuthContext';
 
 interface Product {
   id: string;
@@ -42,9 +43,6 @@ interface CartLine {
 
 const VAT_RATE = 0.15;
 
-// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
-const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
-
 export function POSPage() {
   const { company } = useCompany();
   const { accounts, save, isComplete } = usePostingAccounts(company?.id);
@@ -71,7 +69,6 @@ function POSWorkspace({
 }) {
   const queryClient = useQueryClient();
   const [closedShift, setClosedShift] = useState<Shift | null>(null);
-  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
 
   const { data: shifts } = useQuery({
     queryKey: ['cashier-shifts', companyId],
@@ -208,13 +205,14 @@ function CloseShiftModal({
 }
 
 function OpenShiftForm({ companyId, onSuccess }: { companyId: string; onSuccess: () => void }) {
+  const { user } = useAuth();
   const [openingCash, setOpeningCash] = useState('');
 
   const mutation = useMutation({
     mutationFn: async () => {
       await api.post('/sales/cashier-shifts/open', {
         companyId,
-        cashierId: PLACEHOLDER_USER_ID,
+        cashierId: user!.id,
         openingCash: Number(openingCash),
       });
     },
@@ -255,6 +253,8 @@ function SellingScreen({
   onShiftClosed: (shift: Shift) => void;
 }) {
   const shiftId = shift.id;
+  const { user } = useAuth();
+  const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const queryClient = useQueryClient();
   const [cart, setCart] = useState<CartLine[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit'>('cash');
@@ -318,7 +318,7 @@ function SellingScreen({
         paymentMethod,
         vatRate: VAT_RATE,
         periodId,
-        createdById: PLACEHOLDER_USER_ID,
+        createdById: user!.id,
         shiftId,
         ...accounts,
         lines: cart.map((l) => ({ productId: l.productId, quantity: l.quantity, unitPrice: l.unitPrice })),

@@ -14,12 +14,19 @@ export class User {
   @Column({ select: false })
   passwordHash: string;
 
-  // دور المستخدم: group_manager يملك صلاحية الاطلاع على تقارير كل شركات المجموعة مجتمعة
+  // عمود قديم أُبقي عليه للتوافق فقط؛ المصدر الفعلي للدور الآن هو UserCompanyRole لكل شركة + isGroupManager أدناه
   @Column({ type: 'varchar', length: 20, default: 'employee' })
   role: 'group_manager' | 'accountant' | 'cashier' | 'employee';
 
+  // مدير مجموعة: يملك صلاحية الاطلاع على تقارير كل الشركات بغض النظر عن أي صف في user_company_roles
+  @Column({ name: 'is_group_manager', default: false })
+  isGroupManager: boolean;
+
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ name: 'refresh_token_hash', type: 'varchar', nullable: true, select: false })
+  refreshTokenHash: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

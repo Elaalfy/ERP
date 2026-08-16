@@ -3,11 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api, extractErrorMessage } from '../../lib/api';
 import { Card } from '../../components/ui/Card';
 import { SelectField } from '../../components/ui/SelectField';
+import { useAuth } from '../../context/AuthContext';
 
 // قيمة مؤقتة لحين بناء شاشة تسجيل الدخول الفعلية (نفس نمط بقية الشاشات).
-// يجب أن يكون هذا المستخدم فعلياً بدور group_manager في قاعدة البيانات، وإلا يرفض الباك اند الطلب بـ 403.
-const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
-
 const MONTH_NAMES = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
   'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
@@ -53,6 +51,7 @@ function money(value: number) {
 }
 
 export function GroupReportsPage() {
+  const { user } = useAuth();
   const today = new Date();
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [periodMode, setPeriodMode] = useState<'month' | 'all'>('month');
@@ -76,7 +75,7 @@ export function GroupReportsPage() {
     queryFn: async () => {
       const res = await api.get<GroupSummaryResponse>('/reports/group/summary', {
         params: {
-          userId: PLACEHOLDER_USER_ID,
+          userId: user!.id,
           ...(periodMode === 'month' ? { month, year } : {}),
         },
       });
@@ -91,7 +90,7 @@ export function GroupReportsPage() {
     queryKey: ['receivables-aging'],
     queryFn: async () => {
       const res = await api.get<AgingRow[]>('/reports/group/receivables-aging', {
-        params: { userId: PLACEHOLDER_USER_ID },
+        params: { userId: user!.id },
       });
       return res.data;
     },
@@ -104,7 +103,7 @@ export function GroupReportsPage() {
     queryKey: ['payables-aging'],
     queryFn: async () => {
       const res = await api.get<AgingRow[]>('/reports/group/payables-aging', {
-        params: { userId: PLACEHOLDER_USER_ID },
+        params: { userId: user!.id },
       });
       return res.data;
     },

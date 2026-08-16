@@ -9,9 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { HrPostingAccountsSetup } from './HrPostingAccountsSetup';
 import type { Employee } from './EmployeesPage';
-
-// قيمة مؤقتة لحين بناء شاشة المستخدمين وربطها فعلياً (الفترة المالية أصبحت تُجلب فعلياً الآن)
-const PLACEHOLDER_USER_ID = '1c5ae9bb-7d21-4228-a328-dedb49dba710';
+import { useAuth } from '../../context/AuthContext';
 
 interface Payslip {
   id: string;
@@ -56,6 +54,7 @@ function PayrollWorkspace({
   companyName: string;
   accounts: ReturnType<typeof useHrPostingAccounts>['accounts'];
 }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { periodId, isError: periodError } = useActiveFiscalPeriod(companyId);
   const today = new Date();
@@ -119,7 +118,7 @@ function PayrollWorkspace({
         periodMonth,
         periodYear,
         periodId,
-        createdById: PLACEHOLDER_USER_ID,
+        createdById: user!.id,
         salaryExpenseAccountId: accounts.salaryExpenseAccountId,
         gosiPayableAccountId: accounts.gosiPayableAccountId,
         salariesPayableAccountId: accounts.salariesPayableAccountId,

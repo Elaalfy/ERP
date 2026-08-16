@@ -18,7 +18,7 @@ export class ReportsService {
   private async assertGroupManager(userId: string) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('المستخدم غير موجود');
-    if (user.role !== 'group_manager') {
+    if (!user.isGroupManager) {
       throw new ForbiddenException('هذا التقرير مقصور على صلاحية مدير المجموعة فقط');
     }
     return user;
