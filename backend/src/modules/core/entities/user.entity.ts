@@ -25,6 +25,10 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
+  // يُجبر المستخدم على تغيير كلمة المرور قبل السماح له بأي إجراء آخر (مُفعَّل افتراضياً لحساب المدير المزروع تلقائياً)
+  @Column({ name: 'must_change_password', default: false })
+  mustChangePassword: boolean;
+
   @Column({ name: 'refresh_token_hash', type: 'varchar', nullable: true, select: false })
   refreshTokenHash: string | null;
 

@@ -24,7 +24,7 @@ docker-compose up -d postgres
 
 ```bash
 cd backend
-cp .env.example .env   # عدّل القيم إذا لزم
+cp .env.example .env   # يجب تعيين JWT_ACCESS_SECRET و JWT_REFRESH_SECRET بقيمتين حقيقيتين — الخادم يرفض الإقلاع بدونهما
 npm install
 npm run migration:run  # تطبيق كل الجداول على قاعدة البيانات
 npm run start:dev
@@ -36,6 +36,7 @@ npm run start:dev
 
 ```bash
 cd frontend
+cp .env.example .env   # عدّل VITE_API_URL إذا كان الباك اند على رابط مختلف
 npm install
 npm run dev
 ```
@@ -44,6 +45,8 @@ npm run dev
 
 ## ملاحظات مهمة
 
-- **المصادقة (تسجيل الدخول) غير مفعّلة بعد** — الشاشات تعتمد حالياً على اختيار شركة يدوي من القائمة العلوية.
+- **المصادقة (تسجيل الدخول) مُفعَّلة بالكامل** — `JWT` مخصص (`access` + `refresh token` في `httpOnly cookies`) مع حماية `CSRF`، وصلاحية `isGroupManager` منفصلة للوصول الكامل لكل الشركات. أول مستخدم (`admin@elaalfy.local`) يُزرع تلقائياً بكلمة مرور مؤقتة ويُجبر على تغييرها فوراً عند أول دخول قبل أي استخدام آخر للنظام.
+- `JWT_ACCESS_SECRET` و`JWT_REFRESH_SECRET` إلزاميان في بيئة الباك اند بلا أي قيمة افتراضية بديلة (`fallback`) — أي محاولة إقلاع بدونهما تفشل صراحة.
+- رابط الـ `API` في الفرونت اند يُقرأ من `VITE_API_URL` (راجع `frontend/.env.example`) بدل قيمة ثابتة بالكود.
 - بعض النماذج (كالقيد اليدوي) تستخدم مؤقتاً معرّفات ثابتة (`periodId`, `createdById`) لحين بناء شاشات إدارة الفترات المالية والمستخدمين.
 - CORS مفعّل بشكل مفتوح (`origin: true`) للتطوير فقط — يجب تقييده قبل أي نشر فعلي (production).

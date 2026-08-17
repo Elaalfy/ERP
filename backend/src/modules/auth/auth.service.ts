@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -40,11 +40,11 @@ export class AuthService {
   async issueTokens(user: User) {
     const payload = { sub: user.id };
     const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret-change-me',
+      secret: process.env.JWT_ACCESS_SECRET as string,
       expiresIn: ACCESS_TOKEN_TTL,
     });
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-me',
+      secret: process.env.JWT_REFRESH_SECRET as string,
       expiresIn: REFRESH_TOKEN_TTL,
     });
 
@@ -62,6 +62,30 @@ export class AuthService {
 
   async logout(userId: string) {
     await this.usersRepo.update(userId, { refreshTokenHash: null });
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.usersRepo
+      .createQueryBuilder('u')
+      .addSelect('u.passwordHash')
+      .where('u.id = :id', { id: userId })
+      .getOne();
+
+    if (!user) {
+      throw new UnauthorizedException('المستخدم غير موجود');
+    }
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) {
+      throw new BadRequestException('كلمة المرور الحالية غير صحيحة');
+    }
+    if (newPassword.length < 8) {
+      throw new BadRequestException('كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل');
+    }
+    if (newPassword === currentPassword) {
+      throw new BadRequestException('كلمة المرور الجديدة يجب أن تختلف عن الحالية');
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.usersRepo.update(userId, { passwordHash, mustChangePassword: false });
   }
 
   // كل الشركات المسموح للمستخدم الدخول عليها مع الدور في كل شركة؛ مدير المجموعة يرى كل الشركات بدور group_manager

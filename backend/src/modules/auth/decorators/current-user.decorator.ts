@@ -5,6 +5,7 @@ export interface CurrentUserPayload {
   email: string;
   fullName: string;
   isGroupManager: boolean;
+  mustChangePassword: boolean;
 }
 
 export const CurrentUser = createParamDecorator((_data: unknown, ctx: ExecutionContext): CurrentUserPayload => {

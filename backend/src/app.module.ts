@@ -13,6 +13,7 @@ import { PurchasingModule } from './modules/purchasing/purchasing.module';
 import { HrModule } from './modules/hr/hr.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AuthorizationModule } from './modules/authorization/authorization.module';
 import { JwtAccessGuard } from './modules/auth/guards/jwt-access.guard';
 import { CsrfGuard } from './modules/auth/guards/csrf.guard';
 
@@ -28,6 +29,7 @@ import { CsrfGuard } from './modules/auth/guards/csrf.guard';
     HrModule,
     ReportsModule,
     AuthModule,
+    AuthorizationModule,
   ],
   controllers: [AppController],
   providers: [

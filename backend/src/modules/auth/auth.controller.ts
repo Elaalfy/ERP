@@ -2,11 +2,13 @@ import { Body, Controller, Post, Get, Req, Res, UseGuards, HttpCode } from '@nes
 import type { Request, Response } from 'express';
 import { AuthService, ACCESS_TOKEN_MAX_AGE_MS, REFRESH_TOKEN_MAX_AGE_MS } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { CurrentUserPayload } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
+import { AllowPasswordChangePending } from './decorators/allow-password-change-pending.decorator';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -35,11 +37,26 @@ export class AuthController {
     const user = await this.authService.validateCredentials(dto.email, dto.password);
     const { accessToken, refreshToken, csrfToken } = await this.authService.issueTokens(user);
     setAuthCookies(res, accessToken, refreshToken, csrfToken);
-    const companies = await this.authService.getUserCompanies(user);
+    const companies = user.mustChangePassword ? [] : await this.authService.getUserCompanies(user);
     return {
-      user: { id: user.id, email: user.email, fullName: user.fullName, isGroupManager: user.isGroupManager },
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        isGroupManager: user.isGroupManager,
+        mustChangePassword: user.mustChangePassword,
+      },
       companies,
     };
+  }
+
+  @AllowPasswordChangePending()
+  @UseGuards(JwtAccessGuard)
+  @Post('change-password')
+  @HttpCode(200)
+  async changePassword(@CurrentUser() user: CurrentUserPayload, @Body() dto: ChangePasswordDto) {
+    await this.authService.changePassword(user.id, dto.currentPassword, dto.newPassword);
+    return { ok: true };
   }
 
   @Public()
@@ -54,6 +71,7 @@ export class AuthController {
     return { ok: true };
   }
 
+  @AllowPasswordChangePending()
   @UseGuards(JwtAccessGuard)
   @Post('logout')
   @HttpCode(200)
@@ -65,6 +83,7 @@ export class AuthController {
     return { ok: true };
   }
 
+  @AllowPasswordChangePending()
   @UseGuards(JwtAccessGuard)
   @Get('me')
   async me(@CurrentUser() user: CurrentUserPayload) {

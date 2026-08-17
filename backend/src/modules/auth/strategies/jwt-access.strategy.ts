@@ -16,7 +16,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
     super({
       jwtFromRequest: cookieExtractor,
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_ACCESS_SECRET || 'dev-access-secret-change-me',
+      secretOrKey: process.env.JWT_ACCESS_SECRET as string,
     });
   }
 
@@ -26,6 +26,12 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
       throw new UnauthorizedException('المستخدم غير موجود أو معطّل');
     }
     // req.user سيصبح هذا الكائن
-    return { id: user.id, email: user.email, fullName: user.fullName, isGroupManager: user.isGroupManager };
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      isGroupManager: user.isGroupManager,
+      mustChangePassword: user.mustChangePassword,
+    };
   }
 }

@@ -27,6 +27,8 @@ import { Employee } from '../modules/hr/entities/employee.entity';
 import { PayrollRun } from '../modules/hr/entities/payroll-run.entity';
 import { Payslip } from '../modules/hr/entities/payslip.entity';
 import { EmployeeAdvanceLedgerEntry } from '../modules/hr/entities/employee-advance-ledger-entry.entity';
+import { UserPermission } from '../modules/authorization/entities/user-permission.entity';
+import { AuditLog } from '../modules/authorization/entities/audit-log.entity';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
@@ -63,6 +65,8 @@ export const dataSourceOptions: DataSourceOptions = {
     PayrollRun,
     Payslip,
     EmployeeAdvanceLedgerEntry,
+    UserPermission,
+    AuditLog,
   ],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false,
